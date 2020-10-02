@@ -9,8 +9,7 @@ var socketIo = require('socket.io-client');
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 function DevicesScreen({ navigation }) {
-
-  const { state, toggleDevice, removeDevice, updateServerStatus } = useContext(DevicesContext);
+  const { state, setSocket, setServerConnection, toggleDevice, removeDevice } = useContext(DevicesContext);
   let orderedDevices = [];
   const currentDevices = [...state.devices];
   currentDevices.forEach(device => {
@@ -26,11 +25,29 @@ function DevicesScreen({ navigation }) {
   }
 
   useEffect(() => {
-    var socket = socketIo('http://70279be6.ngrok.io');
+    var socket = socketIo('http://36ee9b3a.ngrok.io');
     socket.on('connect', () => {
+      setServerConnection(true);
       console.log('connected');
-    })
-  }, [])
+      setSocket(socket);
+      socket.on('updated', (data) => {
+        toggleDevice(data.device);
+        console.log(data.device);
+      })
+    });
+    socket.on('disconnect', () => {
+      setServerConnection(false);
+      console.log('disconnected');
+      // setSocket(null);
+      // socket.off();
+      socket.connect();
+    });
+
+  }, []);
+
+  const toggleFunction = (device, socket) => {
+    state.socket.emit('toggle_device', { device: device });
+  }
 
   return (
     <View style={styles.container}>
@@ -42,7 +59,7 @@ function DevicesScreen({ navigation }) {
               navigation={navigation}
               onListNavigate={onListNavigate}
               onItemDelete={onItemDelete}
-              toggleFunction={toggleDevice}
+              toggleFunction={toggleFunction}
             />
         )
       })}

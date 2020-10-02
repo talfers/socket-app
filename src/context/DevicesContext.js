@@ -1,11 +1,12 @@
 import createDataContext from './createDataContext';
 import INITIAL_STATE from '../data/defaultDevices';
 
-
 const devicesReducer = (state, action) => {
   switch (action.type) {
-    case 'server_connection':
-      return { ...state, server_connection: action.payload }
+    case 'set_socket':
+      return { ...state, socket: action.payload }
+    case 'set_server_connection':
+      return { ...state, server_connection: {status: action.payload, timestamp: new Date().toString()} }
     case 'toggle_device':
       let toggledDevices = state.devices.map(device => {
         if(device.socket === action.payload.socket) {
@@ -42,26 +43,15 @@ const devicesReducer = (state, action) => {
   }
 }
 
-const clearError = (dispatch) => {
-  return () => {
-    dispatch({type: 'clear_error'})
+const setSocket = ( dispatch ) => {
+  return ( socket ) => {
+    dispatch({ type: 'set_socket', payload: socket });
   }
 }
 
-const addError = ( dispatch ) => {
-  return ( error ) => {
-    dispatch({ type: 'add_error', payload: error })
-  }
-}
-
-const updateServerStatus = (dispatch) => {
-  return ( serverStatus ) => {
-    if(!serverStatus) {
-      dispatch({ type: 'server_connection', payload: serverStatus })
-      dispatch({ type: 'add_error', payload: 'Disconnected from home server' })
-    } else {
-      dispatch({ type: 'server_connection', payload: serverStatus })
-    }
+const setServerConnection = ( dispatch ) => {
+  return ( server_connection ) => {
+    dispatch({ type: 'set_server_connection', payload: server_connection });
   }
 }
 
@@ -73,13 +63,13 @@ const addDevice = (dispatch) => {
 
 const toggleDevice = (dispatch) => {
   return ( device ) => {
-    dispatch({ type: 'toggle_device', payload: device })
+    dispatch({ type: 'toggle_device', payload: device });
   }
 }
 
 const editDevice = (dispatch) => {
   return ( device ) => {
-    dispatch({ type: 'edit_device', payload: device })
+    dispatch({ type: 'edit_device', payload: device });
   }
 }
 
@@ -89,9 +79,20 @@ const removeDevice = (dispatch) => {
   }
 }
 
+const clearError = (dispatch) => {
+  return () => {
+    dispatch({type: 'clear_error'});
+  }
+}
+
+const addError = ( dispatch ) => {
+  return ( error ) => {
+    dispatch({ type: 'add_error', payload: error });
+  }
+}
 
 export const {Provider, Context} = createDataContext(
   devicesReducer,
-  { toggleDevice, addDevice, editDevice, removeDevice, updateServerStatus, addError, clearError },
-  { devices: INITIAL_STATE, server_connection: false, error: '' }
+  { setSocket, setServerConnection, toggleDevice, addDevice, editDevice, removeDevice, addError, clearError },
+  { devices: INITIAL_STATE, server_connection: {status:false, timestamp: ''}, error: '', socket: null }
 );
